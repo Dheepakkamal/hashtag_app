@@ -1,0 +1,182 @@
+<html>
+<head>
+
+<title>Stream App</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+header {
+  background-color: #666;
+  padding: 30px;
+  text-align: center;
+  font-size: 35px;
+  color: white;
+}
+
+/* Create two columns/boxes that floats next to each other */
+nav {
+  float: left;
+  width: 15%;
+  height: 1000px; /* only for demonstration, should be removed */
+  background: #ccc;
+  padding: 20px;
+}
+
+/* Style the list inside the menu */
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+article {
+  float: left;
+  padding: 20px;
+  width: 85%;
+  background-color: #f1f1f1;
+  height: 1000px; /* only for demonstration, should be removed */
+}
+
+/* Clear floats after the columns */
+section:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Style the footer */
+footer {
+  background-color: #777;
+  padding: 10px;
+  text-align: center;
+  color: white;
+}
+
+/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+@media (max-width: 600px) {
+  nav, article {
+    width: 100%;
+    height: auto;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h2>Twitter App</h2>
+</header>
+
+<section>
+  <nav>
+    <ul>
+      <li><a href="">Index</a></li>
+      <li><a href="getUserTweets">Get User Tweets by User ID</a></li>
+      <li><a href="getHashTag">Get Hashtag information</a></li>
+    </ul>
+  </nav>
+
+  <article>
+    <h1>Get Tweets by entering user ID</h1>
+
+    <input type="textbox" id="hashtag" value = "">
+    <button type="button" id="enterHashTag">Enter</button>
+    <div id = "tweetsInfo" hidden>
+    </div>
+  </article>
+</section>
+
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+
+function getCookie(name) {
+   var cookieValue = null;
+   if (document.cookie && document.cookie != '') {
+     var cookies = document.cookie.split(';');
+     for (var i = 0; i < cookies.length; i++) {
+       var cookie = jQuery.trim(cookies[i]);
+       // Does this cookie string begin with the name we want?
+       if (cookie.substring(0, name.length + 1) == (name + '=')) {
+         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+         break;
+       }
+     }
+   }
+   return cookieValue;
+ }
+
+ function csrfSafeMethod(method) {
+   // these HTTP methods do not require CSRF protection
+   return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+ }
+
+
+
+
+
+$("#enterHashTag").click(function(){
+    let result;
+    var hashTag = $("#hashtag").val();
+    var data = new FormData();
+    data.append('hashTag', hashTag);
+    var csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+      beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+      }
+    });
+
+    $.ajax({
+            url : "getHashTagInfo",
+            processData : false,
+            contentType : false,
+            type : 'POST',
+            data : data,
+            async: false,
+            error: function() {
+            swal({
+              title: 'Sorry',
+              text: 'Error has occured',
+              icon: 'warning'
+            });
+          },
+          success: function(data) {
+            $('#tweetsInfo').empty();
+            result = data['tweet'].statuses;
+            console.log(result)
+            len = result.length
+
+            var html = '<table><thead><tr> <th>User ID</th> <th>Tweet ID</th> <th>Tweet Time</th> <th>Tweet</th></tr></thead><tbody>';
+            for (var i = 0; i < len; ++i) {
+                  var twee = result[i]
+                  html += '<tr>';
+                  html += '<td>' + twee['user'].screen_name + '</td>';
+                  html += '<td>' + twee['id'] + '</td>';
+                  html += '<td>' + twee['created_at'] + '</td>';
+                  html += '<td>' + twee['text'] + '</td>';
+                  html += "</tr>";
+              }
+              html += '</tbody></table>';
+
+              $(html).appendTo('#tweetsInfo');
+              $('#tweetsInfo').show();
+
+          },
+        })
+  });
+
+</script>
+</html>
